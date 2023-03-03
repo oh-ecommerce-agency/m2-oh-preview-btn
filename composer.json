@@ -1,0 +1,21 @@
+{
+    "name": "m2-oh/product-preview-button",
+    "description": "Add extra button on product edit form to preview product on frontend",
+    "type": "magento2-module",
+    "require": {
+        "php": "~7.4.0",
+        "magento/framework": "*",
+        "magento/module-catalog": "*"
+    },
+    "license": [
+        "OSL-3.0"
+    ],
+    "autoload": {
+        "files": [
+            "registration.php"
+        ],
+        "psr-4": {
+            "OH\\ProductPreview\\": ""
+        }
+    }
+}
