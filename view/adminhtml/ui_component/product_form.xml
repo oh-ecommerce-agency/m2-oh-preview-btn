@@ -3,7 +3,7 @@
         xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Ui:etc/ui_configuration.xsd">
     <settings>
         <buttons>
-            <button  name="productPreview" class="OH\ProductPreview\Block\Adminhtml\Product\Edit\Button\Preview"/>
+            <button name="productPreview" class="OH\PreviewBtn\Block\Adminhtml\Product\Edit\Button\Preview"/>
         </buttons>
     </settings>
 </form>
