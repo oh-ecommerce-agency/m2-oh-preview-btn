@@ -1,10 +1,9 @@
 <?php
 declare(strict_types=1);
 
-namespace OH\PreviewBtn\Block\Adminhtml\Product\Edit\Button;
+namespace OH\PreviewBtn\Block\Adminhtml\Cms\Edit\Button;
 
-use Magento\Catalog\Model\Product\Attribute\Source\Status;
-use Magento\Catalog\Model\ProductRepository;
+use Magento\Cms\Api\PageRepositoryInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\Url;
 use Magento\Framework\UrlInterface;
@@ -19,30 +18,23 @@ class Preview implements ButtonProviderInterface
     private RequestInterface $request;
 
     /**
-     * @var ProductRepository
+     * @var PageRepositoryInterface
      */
-    private ProductRepository $productRepository;
+    private PageRepositoryInterface $pageRepository;
 
     /**
      * @var UrlInterface
      */
     private UrlInterface $frontendUrlBuilder;
 
-    /**
-     * @var StoreManagerInterface
-     */
-    private StoreManagerInterface $storeManager;
-
     public function __construct(
-        StoreManagerInterface $storeManager,
-        ProductRepository $productRepository,
+        PageRepositoryInterface $pageRepository,
         RequestInterface $request,
         Url $frontendUrlBuilder
     ) {
-        $this->productRepository = $productRepository;
+        $this->pageRepository = $pageRepository;
         $this->request = $request;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
-        $this->storeManager = $storeManager;
     }
 
     /**
@@ -50,12 +42,13 @@ class Preview implements ButtonProviderInterface
      */
     public function getButtonData(): array
     {
-        $id = (int)$this->request->getParam('id');
+        $id = (int)$this->request->getParam('page_id');
+        $page = $this->getPage($id);
 
-        if ($this->request->getActionName() != 'new' && $this->canShow($id)) {
+        if ($page && $this->request->getActionName() != 'new' && $this->canShow($page)) {
             return [
                 'label' => __('Preview as customer'),
-                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl('catalog/product/view', $this->getScopeId(), null, ['id' => $id])),
+                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($page->getIdentifier() != 'home' ? $page->getIdentifier() : '', $this->getScopeId($page))),
                 'class' => 'action-secondary',
                 'sort_order' => 10
             ];
@@ -64,31 +57,30 @@ class Preview implements ButtonProviderInterface
         return [];
     }
 
-    private function getScopeId()
+    private function getScopeId($page)
     {
-        $storeId = $this->request->getParam('store');
+        $storeIds = $page->getStoreId();
+        return reset($storeIds);
+    }
 
-        if (!$storeId) {
-            $storeId = $this->storeManager->getDefaultStoreView()->getId();
+    private function getPage($pageId)
+    {
+        try {
+            return $this->pageRepository->getById($pageId);
+        } catch (\Exception $exception) {
+            return null;
         }
-
-        return $storeId;
     }
 
     /**
-     * Preview button only available if product is enabled
+     * Preview button only available if page is active
      *
-     * @param $productId
+     * @param $page
      * @return bool
      */
-    private function canShow($productId): bool
+    private function canShow($page): bool
     {
-        try {
-            $product = $this->productRepository->getById($productId);
-            return $product->getStatus() == Status::STATUS_ENABLED;
-        } catch (\Exception $exception) {
-            return false;
-        }
+        return $page && $page->getIsActive();
     }
 
     /**
