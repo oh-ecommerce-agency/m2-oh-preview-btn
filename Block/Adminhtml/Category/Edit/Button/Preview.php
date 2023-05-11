@@ -1,10 +1,10 @@
 <?php
 declare(strict_types=1);
 
-namespace OH\PreviewBtn\Block\Adminhtml\Product\Edit\Button;
+namespace OH\PreviewBtn\Block\Adminhtml\Category\Edit\Button;
 
-use Magento\Catalog\Model\Product\Attribute\Source\Status;
-use Magento\Catalog\Model\ProductRepository;
+use Magento\Catalog\Api\CategoryRepositoryInterface;
+use Magento\Cms\Api\PageRepositoryInterface;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResourceConnection;
 use Magento\Framework\Url;
@@ -20,9 +20,9 @@ class Preview implements ButtonProviderInterface
     private RequestInterface $request;
 
     /**
-     * @var ProductRepository
+     * @var CategoryRepositoryInterface
      */
-    private ProductRepository $productRepository;
+    private CategoryRepositoryInterface $categoryRepository;
 
     /**
      * @var UrlInterface
@@ -35,22 +35,22 @@ class Preview implements ButtonProviderInterface
     private StoreManagerInterface $storeManager;
 
     /**
-     * @var ResourceConnection
+     * @var ResourceConnection 
      */
     private ResourceConnection $connection;
 
     public function __construct(
         ResourceConnection $connection,
         StoreManagerInterface $storeManager,
-        ProductRepository $productRepository,
+        CategoryRepositoryInterface $categoryRepository,
         RequestInterface $request,
         Url $frontendUrlBuilder
     ) {
         $this->connection = $connection;
-        $this->productRepository = $productRepository;
+        $this->storeManager = $storeManager;
+        $this->categoryRepository = $categoryRepository;
         $this->request = $request;
         $this->frontendUrlBuilder = $frontendUrlBuilder;
-        $this->storeManager = $storeManager;
     }
 
     /**
@@ -59,13 +59,13 @@ class Preview implements ButtonProviderInterface
     public function getButtonData(): array
     {
         $id = (int)$this->request->getParam('id');
-        $product = $this->getProduct($id);
+        $category = $this->getCategory($id);
 
-        if ($product && $this->request->getActionName() != 'new' && $this->canShow($id)) {
+        if ($category && $this->request->getActionName() != 'new' && $this->canShow($category)) {
             $scopeId = $this->getScopeId();
             return [
                 'label' => __('Preview as customer'),
-                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($this->getUrl($product, $scopeId), $scopeId)),
+                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($this->getUrl($category, $scopeId), $scopeId)),
                 'class' => 'action-secondary',
                 'sort_order' => 10
             ];
@@ -85,40 +85,35 @@ class Preview implements ButtonProviderInterface
         return $storeId;
     }
 
-    private function getProduct($id)
+    private function getCategory($categoryId)
     {
         try {
-            return $this->productRepository->getById($id);
+            return $this->categoryRepository->get($categoryId);
         } catch (\Exception $exception) {
             return null;
         }
     }
 
-    /**
-     * Preview button only available if product is enabled
-     *
-     * @param $productId
-     * @return bool
-     */
-    private function canShow($productId): bool
-    {
-        try {
-            $product = $this->productRepository->getById($productId);
-            return $product->getStatus() == Status::STATUS_ENABLED;
-        } catch (\Exception $exception) {
-            return false;
-        }
-    }
-
-    private function getUrl($product, $storeId)
+    private function getUrl($category, $storeId)
     {
         $connec = $this->connection->getConnection();
         $query = sprintf('select request_path from url_rewrite where entity_id = %s and entity_type = "%s" and store_id = %s',
-            $product->getEntityId(),
-            'product',
+            $category->getEntityId(),
+            'category',
             $storeId);
         $result = $connec->fetchOne($query);
         return !empty($result) ? $result : null;
+    }
+
+    /**
+     * Preview button only available if category is active
+     *
+     * @param $category
+     * @return bool
+     */
+    private function canShow($category): bool
+    {
+        return $category && $category->getIsActive();
     }
 
     /**
