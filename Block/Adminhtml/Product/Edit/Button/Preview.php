@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace OH\PreviewBtn\Block\Adminhtml\Product\Edit\Button;
 
 use Magento\Catalog\Model\Product\Attribute\Source\Status;
+use Magento\Catalog\Model\Product\Visibility;
 use Magento\Catalog\Model\ProductRepository;
 use Magento\Framework\App\RequestInterface;
 use Magento\Framework\App\ResourceConnection;
@@ -104,7 +105,8 @@ class Preview implements ButtonProviderInterface
     {
         try {
             $product = $this->productRepository->getById($productId);
-            return $product->getStatus() == Status::STATUS_ENABLED;
+            return $product->getStatus() == Status::STATUS_ENABLED && in_array($product->getVisibility(),
+                    [Visibility::VISIBILITY_IN_CATALOG, Visibility::VISIBILITY_BOTH]);
         } catch (\Exception $exception) {
             return false;
         }

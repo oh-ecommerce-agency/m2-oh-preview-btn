@@ -35,7 +35,7 @@ class Preview implements ButtonProviderInterface
     private StoreManagerInterface $storeManager;
 
     /**
-     * @var ResourceConnection 
+     * @var ResourceConnection
      */
     private ResourceConnection $connection;
 
@@ -61,7 +61,8 @@ class Preview implements ButtonProviderInterface
         $id = (int)$this->request->getParam('id');
         $category = $this->getCategory($id);
 
-        if ($category && $this->request->getActionName() != 'new' && $this->canShow($category)) {
+        //avoid default category
+        if ($category && $category->getId() != 2 && $this->request->getActionName() != 'new' && $this->canShow($category)) {
             $scopeId = $this->getScopeId();
             return [
                 'label' => __('Preview as customer'),
