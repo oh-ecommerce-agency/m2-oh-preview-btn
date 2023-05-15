@@ -64,12 +64,15 @@ class Preview implements ButtonProviderInterface
 
         if ($product && $this->request->getActionName() != 'new' && $this->canShow($id)) {
             $scopeId = $this->getScopeId();
-            return [
-                'label' => __('Preview as customer'),
-                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($this->getUrl($product, $scopeId), $scopeId)),
-                'class' => 'action-secondary',
-                'sort_order' => 10
-            ];
+
+            if ($url = $this->getUrl($product, $scopeId)) {
+                return [
+                    'label' => __('Preview as customer'),
+                    'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($url, $scopeId)),
+                    'class' => 'action-secondary',
+                    'sort_order' => 10
+                ];
+            }
         }
 
         return [];

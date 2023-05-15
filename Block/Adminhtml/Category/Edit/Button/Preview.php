@@ -64,12 +64,15 @@ class Preview implements ButtonProviderInterface
         //avoid default category
         if ($category && $category->getId() != 2 && $this->request->getActionName() != 'new' && $this->canShow($category)) {
             $scopeId = $this->getScopeId();
-            return [
-                'label' => __('Preview as customer'),
-                'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($this->getUrl($category, $scopeId) ?: '', $scopeId)),
-                'class' => 'action-secondary',
-                'sort_order' => 10
-            ];
+
+            if ($url = $this->getUrl($category, $scopeId)) {
+                return [
+                    'label' => __('Preview as customer'),
+                    'on_click' => sprintf("window.open('%s');", $this->getFrontendUrl($url, $scopeId)),
+                    'class' => 'action-secondary',
+                    'sort_order' => 10
+                ];
+            }
         }
 
         return [];
